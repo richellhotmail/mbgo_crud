@@ -13,7 +13,6 @@ function Dashboard() {
     customers: 0
   })
   const [loading, setLoading] = useState(true)
-  const wsRef = useRef(null)
 
   useEffect(() => {
     loadStats()
