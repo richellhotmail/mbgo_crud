@@ -142,7 +142,7 @@ function Companies() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Companies</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Companies Test</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage company information
           </p>
