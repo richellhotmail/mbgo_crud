@@ -45,28 +45,27 @@ function Reports() {
         ]),
         
         // Products by group
-        query(`SELECT pg.prod_grp_short_desc as group_name, COUNT(p.product_code) as count
-               FROM product_groups pg
-               LEFT JOIN products p ON pg.prod_grp_code = p.prod_grp_code
-               WHERE pg.enabled = true
-               GROUP BY pg.prod_grp_code, pg.prod_grp_short_desc
-               ORDER BY count DESC`),
+         query(`SELECT pg.prod_grp_short_desc as group_name, COUNT(p.product_code) as count
+           FROM product_groups pg
+           LEFT JOIN products p ON pg.prod_grp_code = p.prod_grp_code
+           WHERE pg.enabled = 1
+           GROUP BY pg.prod_grp_code, pg.prod_grp_short_desc
+           ORDER BY count DESC`),
         
         // Customers by group
-        query(`SELECT cg.cust_group_short_desc as group_name, COUNT(c.customer_code) as count
-               FROM customer_groups cg
-               LEFT JOIN customers c ON cg.cust_group_code = c.cust_group_code
-               WHERE cg.enabled = true
-               GROUP BY cg.cust_group_code, cg.cust_group_short_desc
-               ORDER BY count DESC`),
+         query(`SELECT cg.cust_group_short_desc as group_name, COUNT(c.customer_code) as count
+           FROM customer_groups cg
+           LEFT JOIN customers c ON cg.cust_group_code = c.cust_group_code
+           WHERE cg.enabled = 1
+           GROUP BY cg.cust_group_code, cg.cust_group_short_desc
+           ORDER BY count DESC`),
         
         // Recent activity from audit trail
-        query(`SELECT table_name, action, COUNT(*) as count, MAX(timestamp) as last_activity
-               FROM audit_trail
-               WHERE timestamp >= NOW() - INTERVAL '30 days'
-               GROUP BY table_name, action
-               ORDER BY last_activity DESC
-               LIMIT 10`)
+         query(`SELECT TOP 10 table_name, action, COUNT(*) as count, MAX(timestamp) as last_activity
+           FROM audit_trail
+           WHERE timestamp >= DATEADD(day, -30, GETDATE())
+           GROUP BY table_name, action
+           ORDER BY last_activity DESC`)
       ])
 
       const [

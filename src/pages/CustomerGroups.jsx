@@ -20,6 +20,7 @@ function CustomerGroups() {
     company_code: '',
     enabled: true
   })
+  const [codeError, setCodeError] = useState('')
 
   useEffect(() => {
     loadData()
@@ -57,7 +58,18 @@ function CustomerGroups() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setCodeError('')
     try {
+      // Only check uniqueness when creating a new customer group
+      if (!editingGroup) {
+        const codeExists = customerGroups.some(
+          (g) => g.cust_group_code.toUpperCase() === formData.cust_group_code.toUpperCase()
+        )
+        if (codeExists) {
+          setCodeError('Customer Group Code must be unique.')
+          return
+        }
+      }
       if (editingGroup) {
         await query(
           `UPDATE customer_groups SET 
@@ -184,8 +196,14 @@ function CustomerGroups() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Group Code</label>
                   <input type="text" maxLength="3" required disabled={editingGroup} className="input-field"
-                    value={formData.cust_group_code} onChange={(e) => setFormData({...formData, cust_group_code: e.target.value.toUpperCase()})}
+                    value={formData.cust_group_code} onChange={(e) => {
+                      setFormData({...formData, cust_group_code: e.target.value.toUpperCase()})
+                      setCodeError('')
+                    }}
                   />
+                  {codeError && (
+                    <p className="text-xs text-red-600 mt-1">{codeError}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Description</label>

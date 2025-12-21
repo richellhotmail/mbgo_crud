@@ -32,6 +32,7 @@ function Products() {
     price_zone_10: 0,
     enabled: true
   })
+  const [codeError, setCodeError] = useState('')
 
   useEffect(() => {
     loadData()
@@ -61,8 +62,20 @@ function Products() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+    setCodeError('')
     try {
+      // Only check uniqueness when creating a new product
+      if (!editingProduct) {
+        const codeExists = products.some(
+          (p) =>
+            p.product_code.toUpperCase() === formData.product_code.toUpperCase() &&
+            p.company_code === formData.company_code
+        )
+        if (codeExists) {
+          setCodeError('Product code must be unique for the selected company.')
+          return
+        }
+      }
       // prepare params with proper names and types
       const params = {
         code: formData.product_code,
@@ -138,7 +151,6 @@ function Products() {
           user.id
         )
       }
-      
       // close modal, clear editing and refresh
       setShowForm(false)
       setEditingProduct(null)
@@ -155,8 +167,8 @@ function Products() {
       product_code: '',
       product_short_desc: '',
       product_long_desc: '',
-      prod_grp_code: '',
-      company_code: '',
+      prod_grp_code: productGroups[0]?.prod_grp_code || '',
+      company_code: companies[0]?.company_code || '',
       price_zone_1: 0,
       price_zone_2: 0,
       price_zone_3: 0,
@@ -247,7 +259,10 @@ function Products() {
         
         {hasPermission('create', 'products') && (
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
             className="btn-primary flex items-center space-x-2"
           >
             <Plus className="h-4 w-4" />
@@ -285,8 +300,14 @@ function Products() {
                       disabled={editingProduct}
                       className="input-field"
                       value={formData.product_code}
-                      onChange={(e) => setFormData({...formData, product_code: e.target.value.toUpperCase()})}
+                      onChange={(e) => {
+                        setFormData({ ...formData, product_code: e.target.value.toUpperCase() })
+                        setCodeError('')
+                      }}
                     />
+                    {codeError && (
+                      <p className="text-xs text-red-600 mt-1">{codeError}</p>
+                    )}
                   </div>
                   
                   <div>

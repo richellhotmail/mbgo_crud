@@ -18,6 +18,7 @@ function Companies() {
     company_long_desc: '',
     enabled: true
   })
+  const [codeError, setCodeError] = useState('')
 
   useEffect(() => {
     loadCompanies()
@@ -47,7 +48,18 @@ function Companies() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setCodeError('')
     try {
+      // Only check uniqueness when creating a new company
+      if (!editingCompany) {
+        const codeExists = companies.some(
+          (c) => c.company_code.toUpperCase() === formData.company_code.toUpperCase()
+        )
+        if (codeExists) {
+          setCodeError('Company code must be unique.')
+          return
+        }
+      }
       if (editingCompany) {
         await query(
           `UPDATE companies SET 
@@ -77,7 +89,6 @@ function Companies() {
         )
         await logAudit('companies', formData.company_code, 'CREATE', null, formData, user.username || user.id)
       }
-      
       // Close modal and reload data on successful submission
       resetForm();
       await loadCompanies()
@@ -142,7 +153,7 @@ function Companies() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Companies Test</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Companies</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage company information
           </p>
@@ -187,8 +198,14 @@ function Companies() {
                     disabled={editingCompany}
                     className="input-field"
                     value={formData.company_code}
-                    onChange={(e) => setFormData({...formData, company_code: e.target.value.toUpperCase()})}
+                    onChange={(e) => {
+                      setFormData({ ...formData, company_code: e.target.value.toUpperCase() })
+                      setCodeError('')
+                    }}
                   />
+                  {codeError && (
+                    <p className="text-xs text-red-600 mt-1">{codeError}</p>
+                  )}
                 </div>
                 
                 <div>

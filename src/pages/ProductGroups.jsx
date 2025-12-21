@@ -18,6 +18,7 @@ function ProductGroups() {
     prod_grp_long_desc: '',
     enabled: true
   })
+  const [codeError, setCodeError] = useState('')
 
   useEffect(() => {
     loadProductGroups()
@@ -47,7 +48,18 @@ function ProductGroups() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setCodeError('')
     try {
+      // Only check uniqueness when creating a new product group
+      if (!editingGroup) {
+        const codeExists = productGroups.some(
+          (g) => g.prod_grp_code.toUpperCase() === formData.prod_grp_code.toUpperCase()
+        )
+        if (codeExists) {
+          setCodeError('Product Group Code must be unique.')
+          return
+        }
+      }
       if (editingGroup) {
         await query(
           `UPDATE product_groups SET 
@@ -184,8 +196,14 @@ function ProductGroups() {
                     disabled={editingGroup}
                     className="input-field"
                     value={formData.prod_grp_code}
-                    onChange={(e) => setFormData({...formData, prod_grp_code: e.target.value.toUpperCase()})}
+                    onChange={(e) => {
+                      setFormData({ ...formData, prod_grp_code: e.target.value.toUpperCase() })
+                      setCodeError('')
+                    }}
                   />
+                  {codeError && (
+                    <p className="text-xs text-red-600 mt-1">{codeError}</p>
+                  )}
                 </div>
                 
                 <div>

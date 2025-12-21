@@ -22,6 +22,7 @@ function Customers() {
     company_code: '',
     enabled: true
   })
+  const [codeError, setCodeError] = useState('')
 
   useEffect(() => {
     loadData()
@@ -63,7 +64,20 @@ function Customers() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setCodeError('')
     try {
+      // Only check uniqueness when creating a new customer
+      if (!editingCustomer) {
+        const codeExists = customers.some(
+          (c) =>
+            c.customer_code.toUpperCase() === formData.customer_code.toUpperCase() &&
+            c.company_code === formData.company_code
+        )
+        if (codeExists) {
+          setCodeError('Customer code must be unique for the selected company.')
+          return
+        }
+      }
       if (editingCustomer) {
         await query(
           `UPDATE customers SET 
@@ -195,8 +209,14 @@ function Customers() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Code</label>
                   <input type="text" maxLength="6" required disabled={editingCustomer} className="input-field"
-                    value={formData.customer_code} onChange={(e) => setFormData({...formData, customer_code: e.target.value.toUpperCase()})}
+                    value={formData.customer_code} onChange={(e) => {
+                      setFormData({...formData, customer_code: e.target.value.toUpperCase()})
+                      setCodeError('')
+                    }}
                   />
+                  {codeError && (
+                    <p className="text-xs text-red-600 mt-1">{codeError}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Description</label>
@@ -205,27 +225,31 @@ function Customers() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Group</label>
-                  <select required className="input-field" value={formData.cust_group_code}
-                    onChange={(e) => setFormData({...formData, cust_group_code: e.target.value})}>
-                    <option value="">Select Customer Group</option>
-                    {customerGroups.map((group) => (
-                      <option key={group.cust_group_code} value={group.cust_group_code}>
-                        {group.cust_group_code} - {group.cust_group_short_desc}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Company</label>
                   <select required className="input-field" value={formData.company_code}
-                    onChange={(e) => setFormData({...formData, company_code: e.target.value})}>
+                    onChange={(e) => {
+                      setFormData({ ...formData, company_code: e.target.value, cust_group_code: '' })
+                    }}>
                     <option value="">Select Company</option>
                     {companies.map((company) => (
                       <option key={company.company_code} value={company.company_code}>
                         {company.company_code} - {company.company_short_desc}
                       </option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer Group</label>
+                  <select required className="input-field" value={formData.cust_group_code}
+                    onChange={(e) => setFormData({...formData, cust_group_code: e.target.value})}>
+                    <option value="">Select Customer Group</option>
+                    {customerGroups
+                      .filter((group) => group.company_code === formData.company_code)
+                      .map((group) => (
+                        <option key={group.cust_group_code} value={group.cust_group_code}>
+                          {group.cust_group_code} - {group.cust_group_short_desc}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div>

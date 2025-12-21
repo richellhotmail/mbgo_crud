@@ -4206,6 +4206,7 @@ function Companies() {
     company_long_desc: "",
     enabled: true
   });
+  const [codeError, setCodeError] = reactExports.useState("");
   reactExports.useEffect(() => {
     loadCompanies();
   }, []);
@@ -4231,7 +4232,17 @@ function Companies() {
   }, "resetForm");
   const handleSubmit = /* @__PURE__ */ __name(async (e) => {
     e.preventDefault();
+    setCodeError("");
     try {
+      if (!editingCompany) {
+        const codeExists = companies.some(
+          (c) => c.company_code.toUpperCase() === formData.company_code.toUpperCase()
+        );
+        if (codeExists) {
+          setCodeError("Company code must be unique.");
+          return;
+        }
+      }
       if (editingCompany) {
         await query(
           `UPDATE companies SET 
@@ -4345,9 +4356,13 @@ function Companies() {
               disabled: editingCompany,
               className: "input-field",
               value: formData.company_code,
-              onChange: (e) => setFormData({ ...formData, company_code: e.target.value.toUpperCase() })
+              onChange: (e) => {
+                setFormData({ ...formData, company_code: e.target.value.toUpperCase() });
+                setCodeError("");
+              }
             }
-          )
+          ),
+          codeError && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-red-600 mt-1", children: codeError })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-sm font-medium text-gray-700 dark:text-gray-300", children: "Short Description" }),
@@ -4418,6 +4433,7 @@ function ProductGroups() {
     prod_grp_long_desc: "",
     enabled: true
   });
+  const [codeError, setCodeError] = reactExports.useState("");
   reactExports.useEffect(() => {
     loadProductGroups();
   }, []);
@@ -4443,7 +4459,17 @@ function ProductGroups() {
   }, "resetForm");
   const handleSubmit = /* @__PURE__ */ __name(async (e) => {
     e.preventDefault();
+    setCodeError("");
     try {
+      if (!editingGroup) {
+        const codeExists = productGroups.some(
+          (g) => g.prod_grp_code.toUpperCase() === formData.prod_grp_code.toUpperCase()
+        );
+        if (codeExists) {
+          setCodeError("Product Group Code must be unique.");
+          return;
+        }
+      }
       if (editingGroup) {
         await query(
           `UPDATE product_groups SET 
@@ -4557,9 +4583,13 @@ function ProductGroups() {
               disabled: editingGroup,
               className: "input-field",
               value: formData.prod_grp_code,
-              onChange: (e) => setFormData({ ...formData, prod_grp_code: e.target.value.toUpperCase() })
+              onChange: (e) => {
+                setFormData({ ...formData, prod_grp_code: e.target.value.toUpperCase() });
+                setCodeError("");
+              }
             }
-          )
+          ),
+          codeError && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-red-600 mt-1", children: codeError })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-sm font-medium text-gray-700 dark:text-gray-300", children: "Short Description" }),
@@ -4644,6 +4674,7 @@ function Products() {
     price_zone_10: 0,
     enabled: true
   });
+  const [codeError, setCodeError] = reactExports.useState("");
   reactExports.useEffect(() => {
     loadData();
   }, []);
@@ -4669,7 +4700,17 @@ function Products() {
   }, "loadData");
   const handleSubmit = /* @__PURE__ */ __name(async (e) => {
     e.preventDefault();
+    setCodeError("");
     try {
+      if (!editingProduct) {
+        const codeExists = products.some(
+          (p2) => p2.product_code.toUpperCase() === formData.product_code.toUpperCase() && p2.company_code === formData.company_code
+        );
+        if (codeExists) {
+          setCodeError("Product code must be unique for the selected company.");
+          return;
+        }
+      }
       const params = {
         code: formData.product_code,
         short_desc: formData.product_short_desc,
@@ -4749,12 +4790,13 @@ function Products() {
     }
   }, "handleSubmit");
   const resetForm = /* @__PURE__ */ __name(() => {
+    var _a, _b;
     setFormData({
       product_code: "",
       product_short_desc: "",
       product_long_desc: "",
-      prod_grp_code: "",
-      company_code: "",
+      prod_grp_code: ((_a = productGroups[0]) == null ? void 0 : _a.prod_grp_code) || "",
+      company_code: ((_b = companies[0]) == null ? void 0 : _b.company_code) || "",
       price_zone_1: 0,
       price_zone_2: 0,
       price_zone_3: 0,
@@ -4826,7 +4868,10 @@ function Products() {
       hasPermission("create", "products") && /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
         {
-          onClick: () => setShowForm(true),
+          onClick: () => {
+            resetForm();
+            setShowForm(true);
+          },
           className: "btn-primary flex items-center space-x-2",
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-4 w-4" }),
@@ -4859,9 +4904,13 @@ function Products() {
                 disabled: editingProduct,
                 className: "input-field",
                 value: formData.product_code,
-                onChange: (e) => setFormData({ ...formData, product_code: e.target.value.toUpperCase() })
+                onChange: (e) => {
+                  setFormData({ ...formData, product_code: e.target.value.toUpperCase() });
+                  setCodeError("");
+                }
               }
-            )
+            ),
+            codeError && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-red-600 mt-1", children: codeError })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-sm font-medium text-gray-700 dark:text-gray-300", children: "Short Description" }),
@@ -4996,6 +5045,7 @@ function CustomerGroups() {
     company_code: "",
     enabled: true
   });
+  const [codeError, setCodeError] = reactExports.useState("");
   reactExports.useEffect(() => {
     loadData();
   }, []);
@@ -5029,7 +5079,17 @@ function CustomerGroups() {
   }, "resetForm");
   const handleSubmit = /* @__PURE__ */ __name(async (e) => {
     e.preventDefault();
+    setCodeError("");
     try {
+      if (!editingGroup) {
+        const codeExists = customerGroups.some(
+          (g) => g.cust_group_code.toUpperCase() === formData.cust_group_code.toUpperCase()
+        );
+        if (codeExists) {
+          setCodeError("Customer Group Code must be unique.");
+          return;
+        }
+      }
       if (editingGroup) {
         await query(
           `UPDATE customer_groups SET 
@@ -5140,9 +5200,13 @@ function CustomerGroups() {
               disabled: editingGroup,
               className: "input-field",
               value: formData.cust_group_code,
-              onChange: (e) => setFormData({ ...formData, cust_group_code: e.target.value.toUpperCase() })
+              onChange: (e) => {
+                setFormData({ ...formData, cust_group_code: e.target.value.toUpperCase() });
+                setCodeError("");
+              }
             }
-          )
+          ),
+          codeError && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-red-600 mt-1", children: codeError })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-sm font-medium text-gray-700 dark:text-gray-300", children: "Short Description" }),
@@ -5229,6 +5293,7 @@ function Customers() {
     company_code: "",
     enabled: true
   });
+  const [codeError, setCodeError] = reactExports.useState("");
   reactExports.useEffect(() => {
     loadData();
   }, []);
@@ -5266,7 +5331,17 @@ function Customers() {
   }, "resetForm");
   const handleSubmit = /* @__PURE__ */ __name(async (e) => {
     e.preventDefault();
+    setCodeError("");
     try {
+      if (!editingCustomer) {
+        const codeExists = customers.some(
+          (c) => c.customer_code.toUpperCase() === formData.customer_code.toUpperCase() && c.company_code === formData.company_code
+        );
+        if (codeExists) {
+          setCodeError("Customer code must be unique for the selected company.");
+          return;
+        }
+      }
       if (editingCustomer) {
         await query(
           `UPDATE customers SET 
@@ -5382,9 +5457,13 @@ function Customers() {
               disabled: editingCustomer,
               className: "input-field",
               value: formData.customer_code,
-              onChange: (e) => setFormData({ ...formData, customer_code: e.target.value.toUpperCase() })
+              onChange: (e) => {
+                setFormData({ ...formData, customer_code: e.target.value.toUpperCase() });
+                setCodeError("");
+              }
             }
-          )
+          ),
+          codeError && /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-red-600 mt-1", children: codeError })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-sm font-medium text-gray-700 dark:text-gray-300", children: "Short Description" }),
@@ -5401,6 +5480,28 @@ function Customers() {
           )
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-sm font-medium text-gray-700 dark:text-gray-300", children: "Company" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "select",
+            {
+              required: true,
+              className: "input-field",
+              value: formData.company_code,
+              onChange: (e) => {
+                setFormData({ ...formData, company_code: e.target.value, cust_group_code: "" });
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "Select Company" }),
+                companies.map((company) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: company.company_code, children: [
+                  company.company_code,
+                  " - ",
+                  company.company_short_desc
+                ] }, company.company_code))
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-sm font-medium text-gray-700 dark:text-gray-300", children: "Customer Group" }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "select",
@@ -5411,31 +5512,11 @@ function Customers() {
               onChange: (e) => setFormData({ ...formData, cust_group_code: e.target.value }),
               children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "Select Customer Group" }),
-                customerGroups.map((group) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: group.cust_group_code, children: [
+                customerGroups.filter((group) => group.company_code === formData.company_code).map((group) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: group.cust_group_code, children: [
                   group.cust_group_code,
                   " - ",
                   group.cust_group_short_desc
                 ] }, group.cust_group_code))
-              ]
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-sm font-medium text-gray-700 dark:text-gray-300", children: "Company" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "select",
-            {
-              required: true,
-              className: "input-field",
-              value: formData.company_code,
-              onChange: (e) => setFormData({ ...formData, company_code: e.target.value }),
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "Select Company" }),
-                companies.map((company) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: company.company_code, children: [
-                  company.company_code,
-                  " - ",
-                  company.company_short_desc
-                ] }, company.company_code))
               ]
             }
           )
@@ -5739,35 +5820,34 @@ function Reports() {
       ] = await Promise.all([
         // Summary statistics
         Promise.all([
-          query("SELECT COUNT(*) as count FROM companies WHERE enabled = true"),
-          query("SELECT COUNT(*) as count FROM product_groups WHERE enabled = true"),
-          query("SELECT COUNT(*) as count FROM products WHERE enabled = true"),
-          query("SELECT COUNT(*) as count FROM customer_groups WHERE enabled = true"),
-          query("SELECT COUNT(*) as count FROM customers WHERE enabled = true"),
-          query("SELECT COUNT(*) as count FROM products WHERE enabled = true"),
-          query("SELECT COUNT(*) as count FROM products WHERE enabled = false")
+          query("SELECT COUNT(*) as count FROM companies WHERE enabled = 1"),
+          query("SELECT COUNT(*) as count FROM product_groups WHERE enabled = 1"),
+          query("SELECT COUNT(*) as count FROM products WHERE enabled = 1"),
+          query("SELECT COUNT(*) as count FROM customer_groups WHERE enabled = 1"),
+          query("SELECT COUNT(*) as count FROM customers WHERE enabled = 1"),
+          query("SELECT COUNT(*) as count FROM products WHERE enabled = 1"),
+          query("SELECT COUNT(*) as count FROM products WHERE enabled = 0")
         ]),
         // Products by group
         query(`SELECT pg.prod_grp_short_desc as group_name, COUNT(p.product_code) as count
-               FROM product_groups pg
-               LEFT JOIN products p ON pg.prod_grp_code = p.prod_grp_code
-               WHERE pg.enabled = true
-               GROUP BY pg.prod_grp_code, pg.prod_grp_short_desc
-               ORDER BY count DESC`),
+           FROM product_groups pg
+           LEFT JOIN products p ON pg.prod_grp_code = p.prod_grp_code
+           WHERE pg.enabled = 1
+           GROUP BY pg.prod_grp_code, pg.prod_grp_short_desc
+           ORDER BY count DESC`),
         // Customers by group
         query(`SELECT cg.cust_group_short_desc as group_name, COUNT(c.customer_code) as count
-               FROM customer_groups cg
-               LEFT JOIN customers c ON cg.cust_group_code = c.cust_group_code
-               WHERE cg.enabled = true
-               GROUP BY cg.cust_group_code, cg.cust_group_short_desc
-               ORDER BY count DESC`),
+           FROM customer_groups cg
+           LEFT JOIN customers c ON cg.cust_group_code = c.cust_group_code
+           WHERE cg.enabled = 1
+           GROUP BY cg.cust_group_code, cg.cust_group_short_desc
+           ORDER BY count DESC`),
         // Recent activity from audit trail
-        query(`SELECT table_name, action, COUNT(*) as count, MAX(timestamp) as last_activity
-               FROM audit_trail
-               WHERE timestamp >= NOW() - INTERVAL '30 days'
-               GROUP BY table_name, action
-               ORDER BY last_activity DESC
-               LIMIT 10`)
+        query(`SELECT TOP 10 table_name, action, COUNT(*) as count, MAX(timestamp) as last_activity
+           FROM audit_trail
+           WHERE timestamp >= DATEADD(day, -30, GETDATE())
+           GROUP BY table_name, action
+           ORDER BY last_activity DESC`)
       ]);
       const [
         totalCompanies,
