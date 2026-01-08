@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server.js",
-    "start-frontend": "vite preview --host 0.0.0.0 --port 1000",
-    "start-backend": "node server.js"
+    "start": "serve -s dist -l 8080"
   },
   "dependencies": {
     "clsx": "^1.2.1",
@@ -25,7 +23,8 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^6.8.1",
     "serve": "^14.2.5",
-    "signal-exit": "^4.1.0"
+    "signal-exit": "^4.1.0",
+    "vite": "^4.3.2"              // move Vite to dependencies so it installs in production
   },
   "devDependencies": {
     "@types/react": "^18.0.28",
@@ -38,13 +37,9 @@
     "eslint-plugin-react": "^7.37.5",
     "postcss": "^8.4.24",
     "tailwindcss": "^3.3.0",
-    "vite": "^4.3.2",
     "vite-plugin-eslint2": "^5.0.4"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "azureBuild": {
-    "installNode": true
   }
 }

@@ -13,10 +13,10 @@ app.use(express.json());
 
 // Use environment variables for secrets in production
 const sqlConfig = {
-  server: process.env.SQL_SERVER || 'fsdcir.database.windows.net',
-  database: process.env.SQL_DATABASE || 'mbgo',
-  user: process.env.SQL_USER || 'mbgoadmin',
-  password: process.env.SQL_PASSWORD || 'MBgop@ssw0rd2025',
+  server: process.env.AZURE_SQL_SERVER || 'fsdcir.database.windows.net',
+  database: process.env.AZURE_SQL_DATABASE || 'mbgo',
+  user: process.env.AZURE_SQL_USER || 'mbgoadmin',
+  password: process.env.AZURE_SQL_PASSWORD || 'MBgop@ssw0rd2025',
   encrypt: true,
   trustServerCertificate: false,
   connectionTimeout: 30000,
