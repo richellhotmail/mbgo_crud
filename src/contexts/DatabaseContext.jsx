@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-// Base API host — allow override via env; default to relative path so frontend uses same host (useful when backend and frontend deployed on same App Service)
-// If you need to call a different host set REACT_APP_API_URL in the environment (no trailing slash).
-const API_URL = (process.env.REACT_APP_API_URL || '').replace(/\/$/, '')
+// Base API host — allow override via Vite env (VITE_API_URL); default to provided backend URL (no trailing slash)
+const API_URL = (import.meta.env.REACT_APP_API_URL || 'https://mbgo-api-byf3dhb4fhfbc6cz.southeastasia-01.azurewebsites.net').replace(/\/$/, '')
 
 const DatabaseContext = createContext()
 
@@ -38,8 +37,15 @@ export function DatabaseProvider({ children }) {
         body: JSON.stringify(schema)
       })
 
+      const contentType = (res.headers.get('content-type') || '').toLowerCase()
       const text = await res.text()
       if (!text) throw new Error(`Empty response from ${url} (status ${res.status})`)
+
+      // If server returned HTML (error page or index.html), surface a helpful message
+      if (!contentType.includes('application/json') || text.trim().startsWith('<')) {
+        const snippet = text.trim().slice(0, 300).replace(/\s+/g, ' ')
+        throw new Error(`Expected JSON from ${url} but received ${contentType || 'unknown'} (status ${res.status}). Response snippet: ${snippet}`)
+      }
 
       let data
       try { data = JSON.parse(text) } catch (parseErr) {
@@ -72,8 +78,14 @@ export function DatabaseProvider({ children }) {
         body: JSON.stringify({ query: sql, params })
       })
 
+      const contentType = (res.headers.get('content-type') || '').toLowerCase()
       const text = await res.text()
       if (!text) throw new Error(`Empty response from ${url} (status ${res.status})`)
+
+      if (!contentType.includes('application/json') || text.trim().startsWith('<')) {
+        const snippet = text.trim().slice(0, 300).replace(/\s+/g, ' ')
+        throw new Error(`Expected JSON from ${url} but received ${contentType || 'unknown'} (status ${res.status}). Response snippet: ${snippet}`)
+      }
 
       let result
       try { result = JSON.parse(text) } catch (parseErr) {
