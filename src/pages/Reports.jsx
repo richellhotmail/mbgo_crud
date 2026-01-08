@@ -35,37 +35,37 @@ function Reports() {
       ] = await Promise.all([
         // Summary statistics
         Promise.all([
-          query('SELECT COUNT(*) as count FROM companies WHERE enabled = 1'),
-          query('SELECT COUNT(*) as count FROM product_groups WHERE enabled = 1'),
-          query('SELECT COUNT(*) as count FROM products WHERE enabled = 1'),
-          query('SELECT COUNT(*) as count FROM customer_groups WHERE enabled = 1'),
-          query('SELECT COUNT(*) as count FROM customers WHERE enabled = 1'),
-          query('SELECT COUNT(*) as count FROM products WHERE enabled = 1'),
-          query('SELECT COUNT(*) as count FROM products WHERE enabled = 0')
+          // query('SELECT COUNT(*) as count FROM companies WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM product_groups WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM products WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM customer_groups WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM customers WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM products WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM products WHERE enabled = 0')
         ]),
         
-        // Products by group
-         query(`SELECT pg.prod_grp_short_desc as group_name, COUNT(p.product_code) as count
-           FROM product_groups pg
-           LEFT JOIN products p ON pg.prod_grp_code = p.prod_grp_code
-           WHERE pg.enabled = 1
-           GROUP BY pg.prod_grp_code, pg.prod_grp_short_desc
-           ORDER BY count DESC`),
+        // // Products by group
+        //  query(`SELECT pg.prod_grp_short_desc as group_name, COUNT(p.product_code) as count
+        //    FROM product_groups pg
+        //    LEFT JOIN products p ON pg.prod_grp_code = p.prod_grp_code
+        //    WHERE pg.enabled = 1
+        //    GROUP BY pg.prod_grp_code, pg.prod_grp_short_desc
+        //    ORDER BY count DESC`),
         
-        // Customers by group
-         query(`SELECT cg.cust_group_short_desc as group_name, COUNT(c.customer_code) as count
-           FROM customer_groups cg
-           LEFT JOIN customers c ON cg.cust_group_code = c.cust_group_code
-           WHERE cg.enabled = 1
-           GROUP BY cg.cust_group_code, cg.cust_group_short_desc
-           ORDER BY count DESC`),
+        // // Customers by group
+        //  query(`SELECT cg.cust_group_short_desc as group_name, COUNT(c.customer_code) as count
+        //    FROM customer_groups cg
+        //    LEFT JOIN customers c ON cg.cust_group_code = c.cust_group_code
+        //    WHERE cg.enabled = 1
+        //    GROUP BY cg.cust_group_code, cg.cust_group_short_desc
+        //    ORDER BY count DESC`),
         
-        // Recent activity from audit trail
-         query(`SELECT TOP 10 table_name, action, COUNT(*) as count, MAX(timestamp) as last_activity
-           FROM audit_trail
-           WHERE timestamp >= DATEADD(day, -30, GETDATE())
-           GROUP BY table_name, action
-           ORDER BY last_activity DESC`)
+        // // Recent activity from audit trail
+        //  query(`SELECT TOP 10 table_name, action, COUNT(*) as count, MAX(timestamp) as last_activity
+        //    FROM audit_trail
+        //    WHERE timestamp >= DATEADD(day, -30, GETDATE())
+        //    GROUP BY table_name, action
+        //    ORDER BY last_activity DESC`)
       ])
 
       const [

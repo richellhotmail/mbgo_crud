@@ -13,11 +13,13 @@ function Dashboard() {
     customers: 0
   })
   const [loading, setLoading] = useState(true)
+  const initializedRef = useRef(false)
 
   useEffect(() => {
+    if (initializedRef.current) return
+    initializedRef.current = true
     loadStats()
   })
-
   const loadStats = async () => {
     try {
       const [

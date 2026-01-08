@@ -63,7 +63,7 @@ function CustomerGroups() {
       // Only check uniqueness when creating a new customer group
       if (!editingGroup) {
         const codeExists = customerGroups.some(
-          (g) => g.cust_group_code.toUpperCase() === formData.cust_group_code.toUpperCase()
+          (g) => (g.cust_group_code.toUpperCase() === formData.cust_group_code.toUpperCase()) && (g.company_code === formData.company_code)
         )
         if (codeExists) {
           setCodeError('Customer Group Code must be unique.')
@@ -78,7 +78,7 @@ function CustomerGroups() {
            company_code = @company_code,
            enabled = @enabled, 
            updated_at = GETUTCDATE() 
-           WHERE cust_group_code = @code`,
+           WHERE cust_group_code = @code AND company_code = @company_code`,
           {
             short_desc: formData.cust_group_short_desc,
             long_desc: formData.cust_group_long_desc,
@@ -125,7 +125,7 @@ function CustomerGroups() {
   const handleDelete = async (group) => {
     if (!confirm('Are you sure you want to delete this customer group?')) return
     try {
-      await query('DELETE FROM customer_groups WHERE cust_group_code = @code', { code: group.cust_group_code })
+      await query('DELETE FROM customer_groups WHERE cust_group_code = @code AND company_code = @company_code', { code: group.cust_group_code, company_code: group.company_code })
       await logAudit('customer_groups', group.cust_group_code, 'DELETE', group, null, user.username || user.id)
       await loadData()
     } catch (error) {

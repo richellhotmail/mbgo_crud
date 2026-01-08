@@ -3499,9 +3499,9 @@ function DatabaseProvider({ children }) {
   const [error, setError] = reactExports.useState(null);
   reactExports.useEffect(() => {
   }, []);
-  const query = /* @__PURE__ */ __name(async (sql, params = []) => {
+  const query = /* @__PURE__ */ __name(async (sql, params = {}) => {
     try {
-      const response = await fetch("http://localhost:3001/api/database/query", {
+      const response = await fetch("/api/database/query", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -3512,20 +3512,20 @@ function DatabaseProvider({ children }) {
         })
       });
       const result = await response.json();
-      if (!result.success) {
-        console.error("❌ Query error:", result.error);
-        throw new Error(result.error);
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Database query failed");
       }
       return result;
-    } catch (error2) {
-      console.error("Database query error:", error2);
-      throw error2;
+    } catch (err) {
+      console.error("❌ Database query error:", err);
+      throw err;
     }
   }, "query");
   const logAudit = /* @__PURE__ */ __name(async (tableName, recordId, action, oldValues, newValues, userId) => {
     try {
       await query(
-        `INSERT INTO audit_trail (table_name, record_id, action, old_values, new_values, user_id) 
+        `INSERT INTO audit_trail
+         (table_name, record_id, action, old_values, new_values, user_id)
          VALUES (@tableName, @recordId, @action, @oldValues, @newValues, @userId)`,
         {
           tableName,
@@ -3537,8 +3537,8 @@ function DatabaseProvider({ children }) {
         }
       );
       console.log(`📝 Audit logged: ${action} on ${tableName}`);
-    } catch (error2) {
-      console.error("Error logging audit trail:", error2);
+    } catch (err) {
+      console.error("❌ Error logging audit trail:", err);
     }
   }, "logAudit");
   const value = {
@@ -3950,7 +3950,11 @@ function Dashboard() {
     customers: 0
   });
   const [loading, setLoading] = reactExports.useState(true);
+  const initializedRef = reactExports.useRef(false);
   reactExports.useEffect(() => {
+    if (initializedRef.current)
+      return;
+    initializedRef.current = true;
     loadStats();
   });
   const loadStats = /* @__PURE__ */ __name(async () => {
@@ -4836,7 +4840,7 @@ function Products() {
     if (!confirm("Are you sure you want to delete this product?"))
       return;
     try {
-      await query("DELETE FROM products WHERE product_code = @code", { code: product.product_code });
+      await query("DELETE FROM products WHERE product_code = @code AND company_code = @company_code", { code: product.product_code, company_code: product.company_code });
       await logAudit("products", product.product_code, "DELETE", product, null, user.id);
       await loadData();
     } catch (error) {
@@ -4849,7 +4853,7 @@ function Products() {
     { key: "product_short_desc", label: "Description" },
     { key: "prod_grp_short_desc", label: "Product Group" },
     { key: "company_short_desc", label: "Company" },
-    { key: "price_zone_1", label: "Price Zone 1", render: (value) => `$${parseFloat(value || 0).toFixed(2)}` },
+    { key: "price_zone_1", label: "Price Zone 1", render: (value) => `${parseFloat(value || 0).toFixed(2)}` },
     {
       key: "enabled",
       label: "Status",
@@ -5083,7 +5087,7 @@ function CustomerGroups() {
     try {
       if (!editingGroup) {
         const codeExists = customerGroups.some(
-          (g) => g.cust_group_code.toUpperCase() === formData.cust_group_code.toUpperCase()
+          (g) => g.cust_group_code.toUpperCase() === formData.cust_group_code.toUpperCase() && g.company_code === formData.company_code
         );
         if (codeExists) {
           setCodeError("Customer Group Code must be unique.");
@@ -5098,7 +5102,7 @@ function CustomerGroups() {
            company_code = @company_code,
            enabled = @enabled, 
            updated_at = GETUTCDATE() 
-           WHERE cust_group_code = @code`,
+           WHERE cust_group_code = @code AND company_code = @company_code`,
           {
             short_desc: formData.cust_group_short_desc,
             long_desc: formData.cust_group_long_desc,
@@ -5144,7 +5148,7 @@ function CustomerGroups() {
     if (!confirm("Are you sure you want to delete this customer group?"))
       return;
     try {
-      await query("DELETE FROM customer_groups WHERE cust_group_code = @code", { code: group.cust_group_code });
+      await query("DELETE FROM customer_groups WHERE cust_group_code = @code AND company_code = @company_code", { code: group.cust_group_code, company_code: group.company_code });
       await logAudit("customer_groups", group.cust_group_code, "DELETE", group, null, user.username || user.id);
       await loadData();
     } catch (error) {
@@ -5790,7 +5794,7 @@ ${details.newValues}`);
 }
 __name(AuditTrail, "AuditTrail");
 function Reports() {
-  const { query } = useDatabase();
+  useDatabase();
   const [loading, setLoading] = reactExports.useState(true);
   const [reportData, setReportData] = reactExports.useState({
     summary: {
@@ -5820,34 +5824,34 @@ function Reports() {
       ] = await Promise.all([
         // Summary statistics
         Promise.all([
-          query("SELECT COUNT(*) as count FROM companies WHERE enabled = 1"),
-          query("SELECT COUNT(*) as count FROM product_groups WHERE enabled = 1"),
-          query("SELECT COUNT(*) as count FROM products WHERE enabled = 1"),
-          query("SELECT COUNT(*) as count FROM customer_groups WHERE enabled = 1"),
-          query("SELECT COUNT(*) as count FROM customers WHERE enabled = 1"),
-          query("SELECT COUNT(*) as count FROM products WHERE enabled = 1"),
-          query("SELECT COUNT(*) as count FROM products WHERE enabled = 0")
-        ]),
-        // Products by group
-        query(`SELECT pg.prod_grp_short_desc as group_name, COUNT(p.product_code) as count
-           FROM product_groups pg
-           LEFT JOIN products p ON pg.prod_grp_code = p.prod_grp_code
-           WHERE pg.enabled = 1
-           GROUP BY pg.prod_grp_code, pg.prod_grp_short_desc
-           ORDER BY count DESC`),
-        // Customers by group
-        query(`SELECT cg.cust_group_short_desc as group_name, COUNT(c.customer_code) as count
-           FROM customer_groups cg
-           LEFT JOIN customers c ON cg.cust_group_code = c.cust_group_code
-           WHERE cg.enabled = 1
-           GROUP BY cg.cust_group_code, cg.cust_group_short_desc
-           ORDER BY count DESC`),
-        // Recent activity from audit trail
-        query(`SELECT TOP 10 table_name, action, COUNT(*) as count, MAX(timestamp) as last_activity
-           FROM audit_trail
-           WHERE timestamp >= DATEADD(day, -30, GETDATE())
-           GROUP BY table_name, action
-           ORDER BY last_activity DESC`)
+          // query('SELECT COUNT(*) as count FROM companies WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM product_groups WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM products WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM customer_groups WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM customers WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM products WHERE enabled = 1'),
+          // query('SELECT COUNT(*) as count FROM products WHERE enabled = 0')
+        ])
+        // // Products by group
+        //  query(`SELECT pg.prod_grp_short_desc as group_name, COUNT(p.product_code) as count
+        //    FROM product_groups pg
+        //    LEFT JOIN products p ON pg.prod_grp_code = p.prod_grp_code
+        //    WHERE pg.enabled = 1
+        //    GROUP BY pg.prod_grp_code, pg.prod_grp_short_desc
+        //    ORDER BY count DESC`),
+        // // Customers by group
+        //  query(`SELECT cg.cust_group_short_desc as group_name, COUNT(c.customer_code) as count
+        //    FROM customer_groups cg
+        //    LEFT JOIN customers c ON cg.cust_group_code = c.cust_group_code
+        //    WHERE cg.enabled = 1
+        //    GROUP BY cg.cust_group_code, cg.cust_group_short_desc
+        //    ORDER BY count DESC`),
+        // // Recent activity from audit trail
+        //  query(`SELECT TOP 10 table_name, action, COUNT(*) as count, MAX(timestamp) as last_activity
+        //    FROM audit_trail
+        //    WHERE timestamp >= DATEADD(day, -30, GETDATE())
+        //    GROUP BY table_name, action
+        //    ORDER BY last_activity DESC`)
       ]);
       const [
         totalCompanies,

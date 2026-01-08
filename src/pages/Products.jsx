@@ -210,7 +210,7 @@ function Products() {
     if (!confirm('Are you sure you want to delete this product?')) return
     
     try {
-      await query('DELETE FROM products WHERE product_code = @code', { code: product.product_code })
+      await query('DELETE FROM products WHERE product_code = @code AND company_code = @company_code', { code: product.product_code, company_code: product.company_code })
       await logAudit('products', product.product_code, 'DELETE', product, null, user.id)
       await loadData()
     } catch (error) {
@@ -224,7 +224,7 @@ function Products() {
     { key: 'product_short_desc', label: 'Description' },
     { key: 'prod_grp_short_desc', label: 'Product Group' },
     { key: 'company_short_desc', label: 'Company' },
-    { key: 'price_zone_1', label: 'Price Zone 1', render: (value) => `$${parseFloat(value || 0).toFixed(2)}` },
+    { key: 'price_zone_1', label: 'Price Zone 1', render: (value) => `${parseFloat(value || 0).toFixed(2)}` },
     { 
       key: 'enabled', 
       label: 'Status',
