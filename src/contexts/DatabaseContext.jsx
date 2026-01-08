@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-// Base API host — allow override via env; default to your API and strip trailing slash
-const API_URL = (process.env.REACT_APP_API_URL || 'https://mbgo-api-byf3dhb4fhfbc6cz.southeastasia-01.azurewebsites.net').replace(/\/$/, '')
+// Base API host — allow override via env; default to relative path so frontend uses same host (useful when backend and frontend deployed on same App Service)
+// If you need to call a different host set REACT_APP_API_URL in the environment (no trailing slash).
+const API_URL = (process.env.REACT_APP_API_URL || '').replace(/\/$/, '')
 
 const DatabaseContext = createContext()
 
@@ -22,8 +23,7 @@ export function DatabaseProvider({ children }) {
   }, [])
 
   const initializeDatabase = async () => {
-    console.log("🔄 Initializing database schema...")
-
+    console.log('🔄 Initializing database schema...')
     const schema = {
       tables: [
         // ... your existing table definitions ...
@@ -31,43 +31,66 @@ export function DatabaseProvider({ children }) {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/database/schema`, {
+      const url = `${API_URL || ''}/api/database/schema`
+      const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schema)
       })
-      const data = await response.json()
-      if (data.success) {
+
+      const text = await res.text()
+      if (!text) throw new Error(`Empty response from ${url} (status ${res.status})`)
+
+      let data
+      try { data = JSON.parse(text) } catch (parseErr) {
+        const err = new Error(`Invalid JSON response from ${url}: ${parseErr.message}`)
+        err.raw = text
+        err.status = res.status
+        throw err
+      }
+
+      if (res.ok && data.success) {
         console.log('✅ Database schema initialized successfully')
-        console.log('📊 Tables created:', schema.tables.map(t => t.name).join(', '))
         setInitialized(true)
       } else {
-        console.error('❌ Failed to initialize database schema:', data.error)
-        setError(data.error)
+        const message = data?.error || `Schema init failed (status ${res.status})`
+        console.error('❌ Failed to initialize database schema:', message)
+        setError(message)
       }
     } catch (err) {
-      console.error('❌ Error initializing database:', err.message)
-      setError(err.message)
+      console.error('❌ Error initializing database:', err)
+      setError(err.message || String(err))
     }
   }
 
   const query = async (sql, params = {}) => {
+    const url = `${API_URL || ''}/api/database/query`
     try {
-      const response = await fetch(`${API_URL}/api/database/query`, {
+      const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: sql, params })
       })
 
-      const result = await response.json()
-      if (!result.success) {
-        console.error('❌ Query error:', result.error)
-        throw new Error(result.error)
+      const text = await res.text()
+      if (!text) throw new Error(`Empty response from ${url} (status ${res.status})`)
+
+      let result
+      try { result = JSON.parse(text) } catch (parseErr) {
+        const err = new Error(`Invalid JSON response from ${url}: ${parseErr.message}`)
+        err.raw = text
+        err.status = res.status
+        throw err
       }
+
+      if (!res.ok || !result.success) {
+        const message = result?.error || `Database query failed (status ${res.status})`
+        console.error('❌ Query error:', message)
+        const err = new Error(message)
+        err.raw = result
+        throw err
+      }
+
       return result
     } catch (err) {
       console.error('Database query error:', err)
